@@ -1,0 +1,108 @@
+LOCUS       X02469                  1317 bp    mRNA    linear   PRI 12-SEP-1993
+DEFINITION  Human mRNA for p53 cellular tumor antigen.
+ACCESSION   X02469 M60950
+VERSION     X02469.1  GI:35209
+KEYWORDS    antigen; tumor antigen.
+SOURCE      Homo sapiens (human)
+  ORGANISM  Homo sapiens
+            Eukaryota; Metazoa; Chordata; Craniata; Vertebrata; Euteleostomi;
+            Mammalia; Eutheria; Euarchontoglires; Primates; Haplorrhini;
+            Catarrhini; Hominidae; Homo.
+REFERENCE   1  (bases 1 to 1317)
+  AUTHORS   Zakut-Houri,R., Bienz-Tadmor,B., Givol,D. and Oren,M.
+  TITLE     Human p53 cellular tumor antigen: cDNA sequence and expression in
+            COS cells
+  JOURNAL   EMBO J. 4 (5), 1251-1255 (1985)
+   PUBMED   4006916
+COMMENT     Data kindly reviewed (19-FEB-1986) by D. Givol.
+FEATURES             Location/Qualifiers
+     source          1..1317
+                     /organism="Homo sapiens"
+                     /mol_type="mRNA"
+                     /db_xref="taxon:9606"
+     CDS             136..1317
+                     /note="unnamed protein product; p53 tumor antigen (aa
+                     1-?)"
+                     /codon_start=1
+                     /protein_id="CAA26306.1"
+                     /db_xref="GI:35210"
+                     /db_xref="GDB:120445"
+                     /db_xref="GOA:P04637"
+                     /db_xref="HGNC:11998"
+                     /db_xref="InterPro:IPR002117"
+                     /db_xref="InterPro:IPR008967"
+                     /db_xref="InterPro:IPR010991"
+                     /db_xref="InterPro:IPR011615"
+                     /db_xref="InterPro:IPR012346"
+                     /db_xref="PDB:1A1U"
+                     /db_xref="PDB:1AIE"
+                     /db_xref="PDB:1C26"
+                     /db_xref="PDB:1DT7"
+                     /db_xref="PDB:1GZH"
+                     /db_xref="PDB:1H26"
+                     /db_xref="PDB:1HS5"
+                     /db_xref="PDB:1JSP"
+                     /db_xref="PDB:1KZY"
+                     /db_xref="PDB:1OLG"
+                     /db_xref="PDB:1OLH"
+                     /db_xref="PDB:1PES"
+                     /db_xref="PDB:1PET"
+                     /db_xref="PDB:1SAE"
+                     /db_xref="PDB:1SAF"
+                     /db_xref="PDB:1SAG"
+                     /db_xref="PDB:1SAH"
+                     /db_xref="PDB:1SAI"
+                     /db_xref="PDB:1SAJ"
+                     /db_xref="PDB:1SAK"
+                     /db_xref="PDB:1SAL"
+                     /db_xref="PDB:1TSR"
+                     /db_xref="PDB:1TUP"
+                     /db_xref="PDB:1UOL"
+                     /db_xref="PDB:1YCQ"
+                     /db_xref="PDB:1YCR"
+                     /db_xref="PDB:1YCS"
+                     /db_xref="PDB:2B3G"
+                     /db_xref="PDB:2BIM"
+                     /db_xref="PDB:2BIN"
+                     /db_xref="PDB:2BIO"
+                     /db_xref="PDB:2BIP"
+                     /db_xref="PDB:2BIQ"
+                     /db_xref="PDB:2F1X"
+                     /db_xref="PDB:3SAK"
+                     /db_xref="UniProtKB/Swiss-Prot:P04637"
+                     /translation="MEEPQSDPSVEPPLSQETFSDLWKLLPENNVLSPLPSQAMDDLM
+                     LSPDDIEQWFTEDPGPDEAPRMPEAAPPVAPAPAAPTPAAPAPAPSWPLSSSVPSQKT
+                     YQGSYGFRLGFLHSGTAKSVTCTYSPALNKMFCQLAKTCPVQLWVDSTPPPGTRVRAM
+                     AIYKQSQHMTEVVRRCPHHERCSDSDGLAPPQHLIRVEGNLRVEYLDDRNTFRHSVVV
+                     PYEPPEVGSDCTTIHYNYMCNSSCMGGMNRRPILTIITLEDSSGNLLGRNSFEVRVCA
+                     CPGRDRRTEEENLRKKGEPHHELPPGSTKRALPNNTSSSPQPKKKPLDGEYFTLQIRG
+                     RERFEMFRELNEALELKDAQAGKEPGGSRAHSSHLKSKKGQSTSRHKKLMFKTEGPDS
+                     D"
+     repeat_region   354..368
+                     /note="direct repeat 1"
+     repeat_region   384..398
+                     /note="direct repeat 1"
+ORIGIN      
+        1 gtctagagcc accgtccagg gagcaggtag ctgctgggct ccggggacac tttgcgttcg
+       61 ggctgggagc gtgctttcca cgacggtgac acgcttccct ggattggcag ccagactgcc
+      121 ttccgggtca ctgccatgga ggagccgcag tcagatccta gcgtcgagcc ccctctgagt
+      181 caggaaacat tttcagacct atggaaacta cttcctgaaa acaacgttct gtcccccttg
+      241 ccgtcccaag caatggatga tttgatgctg tccccggacg atattgaaca atggttcact
+      301 gaagacccag gtccagatga agctcccaga atgccagagg ctgctccccc cgtggcccct
+      361 gcaccagcag ctcctacacc ggcggcccct gcaccagccc cctcctggcc cctgtcatct
+      421 tctgtccctt cccagaaaac ctaccagggc agctacggtt tccgtctggg cttcttgcat
+      481 tctgggacag ccaagtctgt gacttgcacg tactcccctg ccctcaacaa gatgttttgc
+      541 caactggcca agacctgccc tgtgcagctg tgggttgatt ccacaccccc gcccggcacc
+      601 cgcgtccgcg ccatggccat ctacaagcag tcacagcaca tgacggaggt tgtgaggcgc
+      661 tgcccccacc atgagcgctg ctcagatagc gatggtctgg cccctcctca gcatcttatc
+      721 cgagtggaag gaaatttgcg tgtggagtat ttggatgaca gaaacacttt tcgacatagt
+      781 gtggtggtgc cctatgagcc gcctgaggtt ggctctgact gtaccaccat ccactacaac
+      841 tacatgtgta acagttcctg catgggcggc atgaaccgga ggcccatcct caccatcatc
+      901 acactggaag actccagtgg taatctactg ggacggaaca gctttgaggt gcgtgtttgt
+      961 gcctgtcctg ggagagaccg gcgcacagag gaagagaatc tccgcaagaa aggggagcct
+     1021 caccacgagc tgcccccagg gagcactaag cgagcactgc ccaacaacac cagctcctct
+     1081 ccccagccaa agaagaaacc actggatgga gaatatttca cccttcagat ccgtgggcgt
+     1141 gagcgcttcg agatgttccg agagctgaat gaggccttgg aactcaagga tgcccaggct
+     1201 gggaaggagc caggggggag cagggctcac tccagccacc tgaagtccaa aaagggtcag
+     1261 tctacctccc gccataaaaa actcatgttc aagacagaag ggcctgactc agactga
+//
