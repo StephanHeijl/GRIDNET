@@ -1,7 +1,7 @@
 from subprocess import *
 from pprint import pformat as pf
 from json import dumps,loads
-import datetime,re,os
+import datetime,re,os, time
 
 class CondorError(Exception):
 	def __init__(self, message):
@@ -10,6 +10,11 @@ class CondorError(Exception):
 		return repr(self.message)
 		
 class PyCondor():
+	#condordir = "P:\\Condor\\bin"
+    if(sys.platform == "posix"):
+    	eol = "\n"
+    else:
+    	eol = "\r\n"
 	def __init__(self):
 		pass
     	
@@ -106,34 +111,43 @@ class PyCondor():
 		
 		for key, value in jobParameters.items():
 			jobFile.append("%s = %s" % (key.ljust(max([len(k) for k in jobParameters.keys()])),value))
-		
+				
 		for key, value in others.items():
 			jobFile.append("%s = %s" % (key.ljust(max([len(k) for k in jobParameters.keys()])),value))
-
+            
 		jobFile.append("Queue")
 		
 		return '\n'.join(jobFile)
 	
 	def startJob(self,jobid):
-		jobdir = os.path.abspath("./Jobs/%s/")  % jobid
-		command = "cd %s; condor_submit CondorFile.job" % jobdir
+		jobdir = os.path.abspath("%s\\")  % jobid
+		command = "%s\condor_submit CondorFile.job" % self.condordir
+		os.chdir(jobdir)
+		print command
 		starter = Popen(command,shell=True,stdout=PIPE)
-		submissionDetails = starter.stdout.read().split("\n")
-
-		return re.search("cluster (\d+)\.",submissionDetails[-2]).group(1)
+		submissionDetails = starter.stdout.read().split(eol)
+		print submissionDetails
+		
+		try:
+			return re.search("cluster (\d+)\.",submissionDetails[-2]).group(1)
+		except:
+			return submissionDetails
 	
 	def __get_status(self):
-		stat = Popen("condor_status",stdout=PIPE,stderr=PIPE)
+		stat = Popen("%s/condor_status" % self.condordir,stdout=PIPE,stderr=PIPE)
 		err = stat.stderr.read()
 		if len(err) > 0:
 			raise CondorError(err)
 		
 		self.__condorStatus = stat.stdout.read()
-		stat.terminate()
-	
+		try:
+			stat.terminate()
+		except:
+			pass
+			
 	def __parse_status(self):
 		# Split the status into manageble pieces
-		stat = filter(lambda l: len(l)>0, self.__condorStatus.split("\n"))
+		stat = filter(lambda l: len(l)>0, self.__condorStatus.split(eol))
 		
 		splitstat = []
 		for line in stat:
@@ -171,8 +185,9 @@ class PyCondor():
 			totals[key] = 0		
 	
 		for system in systems.values():
-			totals[ dict(system)['State'] ] +=1
-			totals[ 'Total' ] +=1
+			if len(system) > 0:
+				totals[ dict(system)['State'] ] +=1
+				totals[ 'Total' ] +=1
 		
 		systems['Totals'] = totals
 
@@ -187,6 +202,7 @@ class PyCondor():
 	def getJSONCondorStatus(self):
 		self.__get_status()
 		self.__parse_status()
+		self.__condorNiceStatus['@'] = time.strftime("%a, %d %b %Y %H:%M:%S")
 		return dumps(self.__condorNiceStatus)
 
 	def combineJSONCondorStatus(self, *status):
@@ -215,16 +231,19 @@ class PyCondor():
 		return bigStats	
 
 	def __get_queue(self):
-		q = Popen("condor_q",stdout=PIPE,stderr=PIPE)
+		q = Popen("%s/condor_q" % self.condordir ,stdout=PIPE,stderr=PIPE)
 		err = q.stderr.read()
 		if len(err) > 0:
 			raise CondorError(err)
 		
 		self.__condorQueue = q.stdout.read()
-		q.terminate()
+		try:
+			q.terminate()
+		except:
+			pass
 
 	def __parse_queue(self):
-		q = filter(lambda l: len(l)>0, self.__condorQueue.split("\n"))
+		q = filter(lambda l: len(l)>0, self.__condorQueue.split(eol))
 		splitq = []
 		for line in q:
 			splitq.append([])
@@ -258,9 +277,13 @@ class PyCondor():
 
 								v+=1
 							if key in ["ID","SIZE","PRI"]:
-								val = float(line[v])
-
-							job.append([key,val])
+								try:
+									val = float(line[v])
+								except ValueError:
+									val = line[v]
+							
+							if len(key)>0 and val>0:
+								job.append([key,val])
 							k+=1
 							v+=1
 					
@@ -273,36 +296,8 @@ class PyCondor():
 		self.__parse_queue()
 		return self.__condorNiceQueue
 
-	
-if __name__ == "__main__":
-	PyC = PyCondor()
-	print pf( PyC.getCondorStatus() )
-	
-	# Job splitting test -- FASTA ONLY
-	 
-	jobs,sources = PyC.splitJob("doBlast", # Task name
-								"Stephan", # Task owner
-								"A new job file", # Task description
-								"/usr/bin/python", # Task command
-								"blast.py sample.fasta", # Task parameters
-								1, # ID
-								-1,	# Divide parts (-1 = available machines)
-								"sample.fasta" # Uploaded file names
-								)
-	
-	for n in range(len(jobs)):
-		jobDir = "./Jobs/%s/" % (n+1)
-		os.system("mkdir "+jobDir)
-		os.system("cp blast.py %s" % jobDir)
-		
-		sf = open(jobDir+sources[n][0],"w")
-		sf.write(sources[n][1])
-		sf.close()
-		
-		jf = open(jobDir+"CondorFile.job","w")
-		jf.write(jobs[n][1])
-		jf.close()
-		
-		print PyC.startJob(n+1)
-	 
-	print pf( PyC.getCondorQueue() )
+	def getJSONCondorQueue(self):
+		self.__get_queue()
+		self.__parse_queue()
+		self.__condorNiceQueue['@'] = time.strftime("%a, %d %b %Y %H:%M:%S")
+		return dumps(self.__condorNiceQueue)
