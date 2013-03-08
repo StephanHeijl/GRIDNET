@@ -1,7 +1,7 @@
 from subprocess import *
 from pprint import pformat as pf
 from json import dumps,loads
-import datetime,re,os, time
+import datetime,re,os,time,sys
 
 class CondorError(Exception):
 	def __init__(self, message):
@@ -11,12 +11,12 @@ class CondorError(Exception):
 		
 class PyCondor():
 	#condordir = "P:\\Condor\\bin"
-    if(sys.platform == "posix"):
-    	eol = "\n"
-    else:
-    	eol = "\r\n"
+	
 	def __init__(self):
-		pass
+		if(sys.platform == "posix"):
+			self.eol = "\n"
+		else:
+			self.eol = "\r\n"
     	
 	def __generateDescription(self, job, owner, **info ):
 		width = 60
@@ -125,7 +125,7 @@ class PyCondor():
 		os.chdir(jobdir)
 		print command
 		starter = Popen(command,shell=True,stdout=PIPE)
-		submissionDetails = starter.stdout.read().split(eol)
+		submissionDetails = starter.stdout.read().split(self.eol)
 		print submissionDetails
 		
 		try:
@@ -147,7 +147,7 @@ class PyCondor():
 			
 	def __parse_status(self):
 		# Split the status into manageble pieces
-		stat = filter(lambda l: len(l)>0, self.__condorStatus.split(eol))
+		stat = filter(lambda l: len(l)>0, self.__condorStatus.split(self.eol))
 		
 		splitstat = []
 		for line in stat:
@@ -243,7 +243,7 @@ class PyCondor():
 			pass
 
 	def __parse_queue(self):
-		q = filter(lambda l: len(l)>0, self.__condorQueue.split(eol))
+		q = filter(lambda l: len(l)>0, self.__condorQueue.split(self.eol))
 		splitq = []
 		for line in q:
 			splitq.append([])

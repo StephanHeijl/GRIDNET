@@ -182,22 +182,40 @@ class masterRequestHandler():
 if __name__ == "__main__":
 	mRH = masterRequestHandler()
 	
-	# Do a checkup of the completed jobs.
-	mRH.checkCompletedJobs()
-	mRH.uploadCompletedJobs()
-	mRH.removeCompletedJobs()
+	try:
+		mRH.checkCompletedJobs()
+	except Exception as ex:
+		print "Something went wrong whilst checking for jobs: ", ex		
+		
+	try:
+		mRH.uploadCompletedJobs()
+		mRH.removeCompletedJobs()
+	except Exception as ex:
+		print "Something went wrong whilst uploading and removing completed jobs: ", ex	
 	
-	jobLimit = mRH.PyC.getCondorStatus()['Totals']['Unclaimed']+1 # Determine the amount of job spaces available
-	print "Available job spaces: %s" % jobLimit
+	try:
+		jobLimit = mRH.PyC.getCondorStatus()['Totals']['Unclaimed']+1 # Determine the amount of job spaces available
+		print "Available job spaces: %s" % jobLimit
+	except Exception as ex:
+		print "Something went wrong whilst determining the job limit: ", ex
 	
-	mRH.loadJobRequests(jobLimit)
+	try:
+		mRH.loadJobRequests(jobLimit)
+	except Exception as ex:
+		print "Something went wrong whilst loading new job requests: ", ex
 	
-	if len(mRH.jobrequests) > 0:
-		mRH.parsePaths()
-		mRH.loadJobFiles()
-		mRH.startNewJobs()
-	else:
-		print "No new jobs @ %s" % time.strftime("%a, %d %b %Y %H:%M:%S")
+	try:
+		if len(mRH.jobrequests) > 0:
+			mRH.parsePaths()
+			mRH.loadJobFiles()
+			mRH.startNewJobs()
+		else:
+			print "No new jobs @ %s" % time.strftime("%a, %d %b %Y %H:%M:%S")
+	except Exception as ex:
+		print "Something went wrong whilst starting the new jobs: ", ex
 	
-	# Report the current state
-	mRH.reportCurrentState()
+	try:
+		mRH.reportCurrentState()
+	except Exception as ex:
+		print "Something went wrong whilst reporting the current state to the server: ", ex
+	
