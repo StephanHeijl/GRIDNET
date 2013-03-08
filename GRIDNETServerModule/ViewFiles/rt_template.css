@@ -1,0 +1,48 @@
+@font-face {
+	font-family: Segoe;
+    src: url(files/font.ttf);
+}
+html { height: 100%; position: relative; }
+body { background: rgb($backgroundColor) url(files/$backgroundImage) top center no-repeat; background-size: cover; width: 490px; margin:0 0 25px 0; padding: 25px 40px 25px 40px; text-align:center; font-family: Segoe,'Segoe UI Light', sans-serif; color: rgb($textColor); overflow-x: hidden;}
+body > * { z-index: 20; position:relative; }
+body > footer {  width: 100%; height: 40%; background: -webkit-linear-gradient(top, rgba($backgroundColor,0) 0%, rgba($backgroundColor,1) 100%);; position: absolute; bottom: 0px; left:0px; z-index: 10; }
+h1 { font-size: 44px; margin: 0px 0px 30px 0px; clear: both;}
+h2 { font-size: 28px; margin: 15px 0px 15px 0px; }
+a { color: rgb($linkColor); }
+
+input[type=text] { font-size: 10pt; color: inherit; font-family: Segoe; padding: 3px; border: 2px solid grey; outline:0;  }
+
+nav { text-align: left; display: block;}
+.tile { color: white; padding: 10px; width: 130px; height: 130px; float:left; background: rgb($tileColor); text-align: left; font-size: 22px; line-height: 1.2em; margin: 0px 20px 20px 0px; -webkit-transition: 0.1s; -moz-transition: 0.1s; cursor:pointer; }
+.tile:nth-child(3n) { margin: 0px 0px 20px 0px; }
+.tile:hover { box-shadow: -4px -4px rgb($lightTileColor), 4px -4px rgb($lightTileColor), 4px 4px rgb($lightTileColor), -4px 4px rgb($lightTileColor); }
+.tile:active { -webkit-transform: scale(0.95); -moz-transform: scale(0.95); opacity: 0.9; -webkit-transition: 0.1s; -moz-transition: 0.1s; }
+#main { text-align: left; display:block; clear: both; }
+.taskCol { width: 100%; }
+.percCol { text-align:right; }
+td { padding: 4px 0px 4px 0px; }
+img.icon{ width: 14px; height:12px; margin-right: 8px;}
+
+#newproject li { margin: 0px 0px 10px 15px; list-style-image: url(img/arrowl.png); cursor:pointer; }
+#newproject li.configured { list-style-image:  url(img/arrowd.png); }
+li > .options { display: none; padding: 5px; cursor: default; }
+
+progress { width: 100%; margin: 20px 0px 20px 0px; border: 1px solid gray; background: silver; height: 25px; }
+progress::-webkit-progress-bar {
+    background: #e5e3e5;
+}
+progress {
+    background: #e5e3e5;
+}
+progress::-webkit-progress-value {
+    background: -webkit-linear-gradient(top, #00d329 60%,#3CF05F 100%);
+}
+progress::-moz-progress-bar {
+    background: -moz-linear-gradient(top, #00d329 60%,#3CF05F 100%);
+}
+::selection {
+	background: $lightTileColor;
+}
+
+button,input[type=submit] { background: #e5e3e5; border: 1px gray solid; padding: 1px 10px 3px 10px; margin: 0; margin-right: 10px; cursor:pointer; }
+button:last-child { margin: 0;}

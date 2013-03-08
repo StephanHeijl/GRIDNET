@@ -1,0 +1,409 @@
+@font-face {
+font-family:Segoe;
+src:url(font.ttf);
+}
+
+html {
+min-height:100%;
+}
+
+body {
+background: rgb(43,78,106) top center no-repeat;
+background-size:cover;
+color:rgb(255,255,255);
+font-family:'Segoe UI Light', Segoe, sans-serif;
+font-size:14pt;
+line-height:1.3em;
+overflow-x:hidden;
+text-align:center;
+}
+
+body.admin {
+/* background:rgb(0,0,0) url(img/desertWallpaper.jpg) 0 -20px no-repeat; */
+background:rgb(10,10,10);
+}
+body.admin:before {
+	content:'';
+	background: url(img/Key.png);
+	position:fixed;
+	right:0px;
+	bottom:0px;
+	opacity: 0.4;
+	width: 256px;
+	height:256px;
+	-webkit-transform: rotate(45deg);
+	-moz-transform: rotate(45deg);
+	-o-transform: rotate(45deg);
+	-ms-transform: rotate(45deg);
+	transform: rotate(45deg);
+}
+body.admin:after {
+	content:'';
+	background: url(img/Key.png);
+	background-size: cover;
+	position:fixed;
+	right:0px;
+	bottom:0;
+	opacity: 0.1;
+	width: 384px;
+	height:384px;
+	-webkit-transform: rotate(45deg);
+	-moz-transform: rotate(45deg);
+	-o-transform: rotate(45deg);
+	-ms-transform: rotate(45deg);
+	transform: rotate(45deg);
+}
+
+body.user {
+/* background:rgb(0,0,0) url(img/beachWallpaper.jpg) top center no-repeat; */
+background:rgb(50,50,50);
+}
+
+body > * {
+position:relative;
+z-index:20;
+}
+
+footer {
+font-size:10pt;
+line-height:1.1em;
+padding-top:12px;
+text-shadow:black 0 0 3px black 0 0 3px;
+}
+
+body > footer {
+background:0 0 rgba(0,0,0,1) 100%;
+bottom:0;
+height:40%;
+left:0;
+position:absolute;
+width:100%;
+z-index:10;
+}
+
+#normal_wrapper {
+margin:25px auto 0;
+padding:25px 40px;
+position:relative;
+width:660px;
+}
+
+#login_wrapper {
+height:300px;
+left:50%;
+margin:-150px 0 0 -200px;
+position:absolute;
+top:50%;
+width:400px;
+}
+
+h1 {
+clear:both;
+font-size:52px;
+margin:0 0 30px;
+width: 100%;
+text-shadow:rgba(0,0,0,1) 0 0 10px;
+}
+
+h2 {
+font-size:32px;
+margin:15px 0;
+}
+
+a {
+color:rgb(255,255,255);
+}
+
+input[type=text],input[type=password],textarea,input[type=number] {
+border:2px solid grey;
+color:black;
+font-family:Segoe;
+font-size:12pt;
+outline:0;
+padding:3px;
+width:400px;
+border-radius:0px;
+}
+
+textarea { 
+height: 100px;
+}
+
+input[type=text]:focus,input[type=password]:focus,textarea:focus {
+border-color:rgb(74,133,181);
+}
+
+input[type=file] {
+font-size:10pt;
+position:relative;
+}
+
+#top_bar {
+background:rgba(33,33,33,1);
+height:12px;
+overflow:hidden;
+position:fixed;
+top:0;
+width:100%;
+z-index:30;
+}
+
+#top_bar_handle {
+bottom:-5px;
+cursor:n-resize;
+display:block;
+font-size:16pt;
+font-weight:700;
+left:50%;
+margin-left:-10px;
+padding:30px 10px 0;
+position:absolute;
+}
+
+#top_bar_inner {
+margin:0 auto;
+text-align:left;
+width:660px;
+}
+
+nav {
+display:block;
+text-align:left;
+}
+.noty_text {
+	font-size: 13pt;
+}
+
+.tile {
+-moz-transition:.1s;
+-webkit-backface-visibility:hidden;
+-webkit-perspective:1000;
+-webkit-transition:.1s;
+background:rgb(43,78,106);
+color:white;
+cursor:pointer;
+float:left;
+font-size:22px;
+height:130px;
+line-height:1.2em;
+margin:0 20px 20px 0;
+padding:10px;
+text-align:left;
+width:130px;
+}
+
+.tile:nth-child(4n) {
+margin:0 0 20px;
+}
+
+.tile:hover {
+box-shadow:-4px -4px rgb(74,133,181), 4px -4px rgb(74,133,181), 4px 4px rgb(74,133,181), -4px 4px rgb(74,133,181);
+}
+
+.tile:active {
+-moz-transform:scale(0.95);
+-moz-transition:.1s;
+-webkit-transform:scale(0.95);
+-webkit-transition:.1s;
+opacity:0.9;
+}
+
+#main {
+clear:both;
+display:block;
+text-align:left;
+text-shadow:rgba(0,0,0,1) 0 0 10px,rgba(0,0,0,1) 0 0 10px;
+}
+
+.taskCol {
+width:100%;
+}
+
+.percCol {
+text-align:right;
+}
+
+td {
+padding:4px 20px 4px 0;
+vertical-align:top;
+}
+
+img.icon {
+height:12px;
+margin-right:8px;
+width:14px;
+}
+
+input[type=checkbox] {
+	display:none;
+}
+
+input[type=checkbox] + label {
+	display:inline-block;
+	font-size:16pt;
+	margin-bottom:10px;
+	padding-left:30px;
+	position:relative;
+	vertical-align: top;
+}
+
+input[type=checkbox] + label span {
+	border: 2px solid grey;
+	background: white;
+	color:grey;
+	font-size:24pt;
+	height:16px;
+	left:0;
+	line-height:.1em;
+	margin-top:-4px;
+	position:absolute;
+	text-shadow:0 0 0 rgba(0,0,0,0);
+	top:50%;
+	width:16px;
+}
+
+input[type=checkbox]:checked + label span:before {
+	content:"✓";
+}
+
+#newproject li {
+cursor:pointer;
+list-style-image:url(img/arrowl.png);
+margin:0 0 10px 15px;
+}
+
+#newproject li.configured {
+list-style-image:url(img/arrowd.png);
+}
+
+li > .options {
+cursor:default;
+display:none;
+padding:5px;
+}
+
+form > tr td:nth-child(3) {
+cursor:pointer;
+font-size:20pt;
+}
+
+thead {
+font-weight:700;
+}
+
+#currentJobs {
+font-size:10pt;
+}
+
+#currentGrids .node td {
+font-size:11pt;
+}
+
+.node[state=offline] {
+display:none;
+}
+
+select {
+	-webkit-appearance:none;
+	background:transparent;
+	border:0;
+	display:inline;
+	font-family:inherit;
+	font-size:13pt;
+	line-height:1;
+	outline:0;
+	overflow:hidden;
+	padding:5px 10px 5px 10px;
+	position:relative;
+	width:450px;
+	color:black;
+}
+
+.styled_select {
+	display:inline-block;
+	margin-bottom:10px;
+	overflow:hidden;
+	position:relative;
+	width:405px;
+	border:2px solid grey;
+	background: white;
+}
+
+.styled_select::before {
+	content:"▼";
+	font-size:14pt;
+	height:100%;
+	line-height:1.7;
+	position:absolute;
+	right:0;
+	text-align:center;
+	top:0;
+	width:40px;
+	color: grey;
+	text-shadow: white 0 0 0;
+}
+
+p {
+font-family:'Segoe UI Light', Segoe, sans-serif;
+}
+
+button,input[type=submit] {
+background:#e5e3e5;
+border:1px gray solid;
+cursor:pointer;
+font-size:12pt;
+margin:0 10px 0 0;
+padding:1px 10px 3px;
+border-radius:0px;
+line-height: 24px;
+font-family: 'Segoe UI Light'; 
+}
+
+button:last-child {
+margin:0;
+}
+
+progress {
+background:#e5e3e5;
+border:1px solid gray;
+height:9px;
+width:75px;
+margin-top: -1px;
+}
+
+progress::-webkit-progress-bar {
+	background:#e5e3e5;
+}
+::selection {
+	background: rgb(74,133,181);
+}
+
+
+progress::-webkit-progress-value {
+    background: -webkit-linear-gradient(top, rgb(74,133,181) 0%, rgb(43,78,106) 100%);
+}
+progress::-moz-progress-bar {
+    background: -moz-linear-gradient(top, rgb(74,133,181) 0%, rgb(43,78,106) 100%);
+}
+
+body.admin progress::-webkit-progress-value {
+	background: -webkit-linear-gradient(bottom, rgb(82,156,74) 0%, rgb(110,211,99) 100%);
+}
+body.admin progress::-moz-progress-bar {
+    background: rgb(78,152,70);
+}
+
+.removeJob {
+cursor:pointer;
+}
+
+.grid_Offline { 
+	display:block;
+}
+
+/* Tooltip from the old ProteinFinder days */
+#tooltip { font-size: 12pt; color: #333; padding: 5px 5px 6px 5px; border: 1px solid grey; background: white; position:absolute; display:none; vertical-align: top; box-shadow: rgba(0,0,0,0.2) 2px 2px 4px; text-shadow: none; }
+
+#tooltip:before { content: '';position: absolute; top: 100%; left:4px; width: 0px; height: 0px; border-color: grey transparent transparent transparent; border-style:solid; border-width:6px; }
+#tooltip:after { content: '';position: absolute; top: 100%; left:5px; width: 0px; height: 0px; border-color: white transparent transparent transparent; border-style:solid; border-width:5px; }
+

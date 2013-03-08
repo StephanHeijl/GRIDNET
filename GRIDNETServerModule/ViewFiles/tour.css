@@ -1,0 +1,7 @@
+html { width: 100%; height: 100%; overflow:hidden; }
+body { width: 100%; height: 100%; overflow:hidden; }
+
+#slides { width:100%; height: 100%; overflow: hidden; }
+.slide { display: inline-block; width:100%; height: 100%; position:relative; }
+.slide > div.cover { width:100%; height: 100%; background: url(img/tour/rasterpattern.png) -1px -1px; position:absolute; top: 0px; left:0px; z-index: 10;}
+.slide > div.background { width:100%; height: 100%; background-size: cover !important; position:absolute; top: 0px; left:0px; z-index: 9; }
