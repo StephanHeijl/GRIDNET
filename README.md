@@ -1,3 +1,5 @@
+![A rotated and cropped screenshot of the GRIDNET interface.](http://cytosine.nl/GRIDNET/files/img/gridnetbanner.png "GRIDNET Banner")
+
 GRIDNET
 =======
 Repository for the GRIDNET cluster interaction project.
