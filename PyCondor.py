@@ -30,22 +30,24 @@ class PyCondor():
 			fasta = self.__fasta2dict(open(filename))
 			parts = self.__splitDict(fasta,pieces)
 			
-		p = 1
+		
+		
 		jfns,jobfiles,nfns,nparts = [],[],[],[]
-
-		for part in parts:
+		nfc = '.'.join(splitname[:-1]+["$( Process )", "part"])
+		nparams = parameters.replace(filename, nfc)
+		njob = self.makeJobFile(taskname, owner, description, command, nparams, "%s.%s" %(id,p))
+		
+		for p in len(range(parts)):
 			nfn = '.'.join(splitname[:-1]+[str(p), "part"])
-			
 			nfns.append(nfn)
-			nparts.append(self.__dict2fasta(part))
 			
-			nparams = parameters.replace(filename, nfn)
-			njob = self.makeJobFile(taskname, owner, description, command, nparams, "%s.%s"%(id,p))
-			jobfiles.append(njob)
-			jfns.append( '.'.join([taskname,owner,str(id),str(p),"job"]) )
+			nf = open( nfn, "w" )
+			nf.write( self.__dict2fasta(parts[p]) )
+			nf.close()
+
 			p+=1
 		
-		return zip(jfns,jobfiles), zip(nfns, nparts)
+		return njob, zip(nfns, parts)
 	
 	def __splitDict(self,dictionary,pieces):
 		nDicts = []
