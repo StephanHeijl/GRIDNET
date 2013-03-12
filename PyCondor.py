@@ -13,7 +13,7 @@ class PyCondor():
 	#condordir = "P:\\Condor\\bin"
 	
 	def __init__(self):
-		if(sys.platform == "posix"):
+		if(sys.platform in ["posix","linux2"]):
 			self.eol = "\n"
 		else:
 			self.eol = "\r\n"
