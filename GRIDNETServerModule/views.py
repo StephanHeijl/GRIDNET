@@ -15,7 +15,8 @@ import os, json,re
 def rel(*x):
     return os.path.join(os.path.abspath(os.path.dirname(__file__)),*x)
 
-def addJobDo(request):
+# This handles jobs that are submitted with the wizard on GRIDNET
+def addJobWizardDo(request):
 	if not request.user.is_authenticated():
 		redirect("index.htm")
 
@@ -78,13 +79,17 @@ def addJobDo(request):
 	
 	requirements = ""	
 	
-	jobfile = PyCondor().makeJobFile(task.taskname, job.owner, job.description, task.command, job.parameters, job_id, requirements=requirements)
+	jobfile = PyCondor().makeJobFile(	task.taskname,
+										job.owner,
+										job.description,
+										task.command,
+										job.parameters,
+										job_id,
+										requirements=requirements)
+										
 	with open(rel(fname % (job_id, "CondorFile.job")),"w+") as jf:
 		jf.write(jobfile)
-
-	#condor_id = PyCondor().startJob(job_id)
-	condor_id = 0
-	job.condor_id = int(condor_id)
+	job.condor_id = int(0)
 	job.save()
 	
 	tarname = "Jobs/%s/job_%s_files.tar.gz" % ( job.id, job.id )
@@ -98,7 +103,75 @@ def addJobDo(request):
 		tf.add(file)
 	tf.close()
 	
-	return HttpResponse(json.dumps({'Response':'OK','JobFile':jobfile, 'Condor_ID':int(condor_id), 'AllFiles':tarname}))
+	return HttpResponse(json.dumps({'Response':'OK','JobFile':jobfile, 'Condor_ID':0, 'AllFiles':tarname}))
+	
+# This handles jobs that are submitted with a custom submit file
+def addJobManualDo(request):
+	if not request.user.is_authenticated():
+		redirect("index.htm")
+
+	if request.method == "POST":
+		req = request.POST
+	elif request.method == "GET":
+		try:
+			req = json.loads(request.GET['request'])
+		except ValueError as err:
+			return HttpResponse( json.dumps(
+				{'Response':'Error: Error in JSON string: %s' % err.args }
+			))
+	try:
+		owner = request.user
+		task = Task.objects.get(taskname="Custom")
+			
+		try:
+			if int(req['Grid']) > 0:
+				grid = Grid.objects.get(id=req['Grid'])
+			else:
+				grid = None
+		except:
+			return HttpResponse( json.dumps( {'Response':'Error: No valid grid selected'} ) )
+		
+		job = Job(owner=owner,task=task,parameters="",description="",grid=grid,node=None)
+		job.save()
+		job_id = job.id
+
+	except KeyError as err:
+		return HttpResponse( json.dumps(
+			{'Response':'Error: not all required keys in JSON string. "%s" was not found.' % err.args }
+		))
+	
+	fname = "Jobs/%s/%s"
+	os.makedirs(rel("Jobs/%s" % job.id))
+
+	if 'File' in request.FILES:
+		for f in request.FILES.values():
+			with open(rel(fname % (job_id, ""))+f.name,"w") as destination:
+				for chunk in f.chunks():
+					destination.write(chunk)
+					
+		job.id = job_id
+		job.save()
+	
+	requirements = ""	
+	
+	jobfile = req['submit']
+	with open(rel(fname % (job_id, "CondorFile.job")),"w+") as jf:
+		jf.write(jobfile)
+
+	job.condor_id = 0
+	job.save()
+	
+	tarname = "Jobs/%s/job_%s_files.tar.gz" % ( job.id, job.id )
+	tf = tarfile.open(rel(tarname), "w:gz")
+	job.file = rel(tarname)
+	job.save()
+	
+	os.chdir(rel("Jobs/%s/" % job.id))
+	for file in os.listdir("."):
+		tf.add(file)
+	tf.close()
+	
+	return HttpResponse(json.dumps({'Response':'OK','JobFile':jobfile, 'Condor_ID':0, 'AllFiles':tarname}))
 
 def checkPassword(username, pw):
 	requirements = []
