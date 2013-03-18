@@ -9,7 +9,7 @@ class Log():
 
 	def write(self, message):
 		t = time.strftime("%a, %d %b %Y %H:%M:%S")
-		self.messages.append(t, message)
+		self.messages.append((t, message))
 		
 	def clearMessages(self):
 		self.messages = []
@@ -223,27 +223,27 @@ if __name__ == "__main__":
 	try:
 		mRH.checkCompletedJobs()
 	except Exception as ex:
-		m = "Something went wrong whilst checking for jobs: "+ ex
+		m = "Something went wrong whilst checking for jobs: " + str(ex)
 		log.write(m)
 		
 	try:
 		mRH.uploadCompletedJobs()
 		mRH.removeCompletedJobs()
 	except Exception as ex:
-		m = "Something went wrong whilst uploading and removing completed jobs: "+ ex	
+		m = "Something went wrong whilst uploading and removing completed jobs: " + str(ex)
 		log.write(m)
 	
 	try:
 		jobLimit = mRH.PyC.getCondorStatus()['Totals']['Unclaimed']+1 # Determine the amount of job spaces available
 		print "Available job spaces: %s" % jobLimit
 	except Exception as ex:
-		m = "Something went wrong whilst determining the job limit: "+ ex
+		m = "Something went wrong whilst determining the job limit: " + str(ex)
 		log.write(m)
 	
 	try:
 		mRH.loadJobRequests(jobLimit)
 	except Exception as ex:
-		m = "Something went wrong whilst loading new job requests: "+ ex
+		m = "Something went wrong whilst loading new job requests: " + str(ex)
 		log.write(m)
 	
 	try:
@@ -254,13 +254,13 @@ if __name__ == "__main__":
 		else:
 			print "No new jobs @ %s" % time.strftime("%a, %d %b %Y %H:%M:%S")
 	except Exception as ex:
-		m = "Something went wrong whilst starting the new jobs: "+ ex
+		m = "Something went wrong whilst starting the new jobs: " + str(ex)
 		log.write(m)
 	
 	try:
 		mRH.reportCurrentState()
 	except Exception as ex:
-		m = "Something went wrong whilst reporting the current state to the server: "+ ex
+		m = "Something went wrong whilst reporting the current state to the server: " + str(ex)
 		log.write(m)
 	
 	log.save()
