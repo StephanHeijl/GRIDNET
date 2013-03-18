@@ -10,7 +10,7 @@ class CondorError(Exception):
 		return repr(self.message)
 		
 class PyCondor():
-	#condordir = "P:\\Condor\\bin"
+	condordir = "/usr/local/bin/"
 	
 	def __init__(self):
 		if(sys.platform in ["posix","linux2"]):
