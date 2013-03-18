@@ -1,8 +1,41 @@
 from PyCondor import *
 import json, requests, os, tarfile, time, re
 
+class Log():
+	def __init__(self, filename):
+		self.scriptStartTime = time.strftime("%a, %d %b %Y %H:%M:%S")
+		self.messages = []
+		self.logFileName = filename
+
+	def write(self, message):
+		t = time.strftime("%a, %d %b %Y %H:%M:%S")
+		self.messages.append(t, message)
+		
+	def clearMessages(self):
+		self.messages = []
+	
+	def save(self):
+		self.logSaveTime = time.strftime("%a, %d %b %Y %H:%M:%S")
+		try:
+			logfile = open(os.path.join(masterRequestHandler.jobsFolder, self.logFileName), "w")
+		except IOError:
+			print "Could not open log file. Outputting all messages to stdout.\n\n"
+			for message in self.messages:
+				print "Message at %s: %s\n" % (message[0], message[1])
+			return
+		
+		logfile.write("Script started at: %s\n" %self.scriptStartTime)
+		for message in self.messages:
+			logfile.write("Message at %s: %s\n" % (message[0], message[1]))
+		
+		if len(self.messages) == 0:
+			logfile.write("Log saved at %s, no errors encountered.\n" % self.logSaveTime)
+			
+		
+		logfile.close()
+
 class masterRequestHandler():
-	jobsFolder = "M:\\CondorMasterRequestHandler"
+	jobsFolder = "/home/users/project/Stephan"
 	submittedJobs = False
 	def __init__(self):
 		print "*"*40
@@ -53,6 +86,7 @@ class masterRequestHandler():
 		for id in self.jobrequests:
 			print "Starting job %s\n" % id
 			jobdir = "%s/Jobs/%s" % (self.jobsFolder,id)
+			
 			 
 			jfr = open(os.path.join(jobdir, "CondorFile.job"), "r")
 			jf = jfr.read()
@@ -60,16 +94,19 @@ class masterRequestHandler():
 			
 			jfw = open(os.path.join(jobdir, "CondorFile.job"),"w")
 			
+			
 			for path in re.findall("%(\w+)%",jf):
 				jf = jf.replace("%"+path+"%", self.paths[path])
 			
 			jfw.write(jf)			
 			jfw.close()
 			
+			
 			if os.path.exists(jobdir):
 				cId = self.PyC.startJob(id)
 				submittedJobs[id] = int(cId)
 				time.sleep(2)
+		
 		
 		runfn = "%s/Jobs/running.log" % (self.jobsFolder)
 		current = {}
@@ -180,29 +217,34 @@ class masterRequestHandler():
 		print req.content
 			
 if __name__ == "__main__":
+	log = Log("log.txt")
 	mRH = masterRequestHandler()
 	
 	try:
 		mRH.checkCompletedJobs()
 	except Exception as ex:
-		print "Something went wrong whilst checking for jobs: ", ex		
+		m = "Something went wrong whilst checking for jobs: "+ ex
+		log.write(m)
 		
 	try:
 		mRH.uploadCompletedJobs()
 		mRH.removeCompletedJobs()
 	except Exception as ex:
-		print "Something went wrong whilst uploading and removing completed jobs: ", ex	
+		m = "Something went wrong whilst uploading and removing completed jobs: "+ ex	
+		log.write(m)
 	
 	try:
 		jobLimit = mRH.PyC.getCondorStatus()['Totals']['Unclaimed']+1 # Determine the amount of job spaces available
 		print "Available job spaces: %s" % jobLimit
 	except Exception as ex:
-		print "Something went wrong whilst determining the job limit: ", ex
+		m = "Something went wrong whilst determining the job limit: "+ ex
+		log.write(m)
 	
 	try:
 		mRH.loadJobRequests(jobLimit)
 	except Exception as ex:
-		print "Something went wrong whilst loading new job requests: ", ex
+		m = "Something went wrong whilst loading new job requests: "+ ex
+		log.write(m)
 	
 	try:
 		if len(mRH.jobrequests) > 0:
@@ -212,10 +254,14 @@ if __name__ == "__main__":
 		else:
 			print "No new jobs @ %s" % time.strftime("%a, %d %b %Y %H:%M:%S")
 	except Exception as ex:
-		print "Something went wrong whilst starting the new jobs: ", ex
+		m = "Something went wrong whilst starting the new jobs: "+ ex
+		log.write(m)
 	
 	try:
 		mRH.reportCurrentState()
 	except Exception as ex:
-		print "Something went wrong whilst reporting the current state to the server: ", ex
+		m = "Something went wrong whilst reporting the current state to the server: "+ ex
+		log.write(m)
+	
+	log.save()
 	
