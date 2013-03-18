@@ -124,7 +124,7 @@ class PyCondor():
 		return '\n'.join(jobFile)
 	
 	def startJob(self,jobid):
-		jobdir = os.path.abspath("%s\\")  % jobid
+		jobdir = os.path.abspath("Jobs/%s")  % jobid
 		command = "%s\condor_submit CondorFile.job" % self.condordir
 		os.chdir(jobdir)
 		print command
