@@ -10,7 +10,7 @@ class CondorError(Exception):
 		return repr(self.message)
 		
 class PyCondor():
-	condordir = "/usr/local/bin/"
+	#condordir = "P:\\Condor\\bin"
 	
 	def __init__(self):
 		if(sys.platform in ["posix","linux2"]):
@@ -124,7 +124,7 @@ class PyCondor():
 		return '\n'.join(jobFile)
 	
 	def startJob(self,jobid):
-		jobdir = os.path.abspath("Jobs/%s")  % jobid
+		jobdir = os.path.abspath("%s\\")  % jobid
 		command = "%s\condor_submit CondorFile.job" % self.condordir
 		os.chdir(jobdir)
 		print command
