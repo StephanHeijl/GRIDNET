@@ -17,7 +17,7 @@ class Log():
 	def save(self):
 		self.logSaveTime = time.strftime("%a, %d %b %Y %H:%M:%S")
 		try:
-			logfile = open(os.path.join(masterRequestHandler.jobsFolder, self.logFileName), "w")
+			logfile = open(os.path.join(masterRequestHandler.mainFolder, self.logFileName), "w")
 		except IOError:
 			print "Could not open log file. Outputting all messages to stdout.\n\n"
 			for message in self.messages:
@@ -35,8 +35,9 @@ class Log():
 		logfile.close()
 
 class masterRequestHandler():
-	jobsFolder = "/home/users/project/Stephan"
+	mainFolder = "/home/users/project/Stephan"
 	submittedJobs = False
+	
 	def __init__(self):
 		print "*"*40
 		print "New job check @ %s" % time.strftime("%a, %d %b %Y %H:%M:%S")
@@ -46,7 +47,7 @@ class masterRequestHandler():
 
 	def parsePaths(self):
 		self.paths = {}
-		pathsfile = open(os.path.join(self.jobsFolder,"PATH.ini"))
+		pathsfile = open(os.path.join(self.mainFolder,"PATH.ini"))
 		for path in pathsfile:
 			p = path.split("=")
 			self.paths[p[0].strip(" ")] = p[1].strip(" ")
@@ -65,18 +66,18 @@ class masterRequestHandler():
 			
 			f = job['Files']
 			try:
-				os.mkdir("%s/Jobs/%s" % (self.jobsFolder, id))
+				os.mkdir("%s/Jobs/%s" % (self.mainFolder, id))
 			except:
 				print "%s already exists" % id
 			print f
 			tar = requests.get(f).content
 			
-			newtarname = "%s/Jobs/%s/job_%s_%s.tar.gz" % (self.jobsFolder,id,id,job['Owner'])
+			newtarname = "%s/Jobs/%s/job_%s_%s.tar.gz" % (self.mainFolder,id,id,job['Owner'])
 			newtar = open( newtarname , "wb")
 			newtar.write(tar)
 			newtar.close()
 			result = tarfile.open(newtarname,"r:gz")
-			result.extractall(path="%s/Jobs/%s/" % (self.jobsFolder,id))
+			result.extractall(path="%s/Jobs/%s/" % (self.mainFolder,id))
 			result.close()
 			os.remove(newtarname)
 			
@@ -85,30 +86,34 @@ class masterRequestHandler():
 		submittedJobs = {}
 		for id in self.jobrequests:
 			print "Starting job %s\n" % id
-			jobdir = "%s/Jobs/%s" % (self.jobsFolder,id)
+			jobdir = "%s/Jobs/%s" % (self.mainFolder,id)
 			
-			 
 			jfr = open(os.path.join(jobdir, "CondorFile.job"), "r")
 			jf = jfr.read()
 			jfr.close()
 			
-			jfw = open(os.path.join(jobdir, "CondorFile.job"),"w")
-			
-			
+			jfw = open(os.path.join(jobdir, "CondorFile.job"),"w")			
 			for path in re.findall("%(\w+)%",jf):
 				jf = jf.replace("%"+path+"%", self.paths[path])
 			
 			jfw.write(jf)			
 			jfw.close()
 			
-			
 			if os.path.exists(jobdir):
-				cId = self.PyC.startJob(id)
+				try:
+					cId = self.PyC.startJob(id)
+				except Exception as ex:
+					print ex
+					
 				submittedJobs[id] = int(cId)
+				print cId
 				time.sleep(2)
+			else:
+				print "Something went wrong, the path was not found"
+				print jobdir
 		
 		
-		runfn = "%s/Jobs/running.log" % (self.jobsFolder)
+		runfn = "%s/Jobs/running.log" % (self.mainFolder)
 		current = {}
 		if os.path.exists(runfn):
 			running = open(runfn,"r")
@@ -138,7 +143,7 @@ class masterRequestHandler():
 	
 	
 	def checkCompletedJobs(self):
-		runfn = "%s/Jobs/running.log" % (self.jobsFolder)
+		runfn = "%s/Jobs/running.log" % (self.mainFolder)
 		condorids = json.loads(open(runfn, "r").read())
 		running = []
 		queue = self.PyC.getCondorQueue()
@@ -152,8 +157,8 @@ class masterRequestHandler():
 		print running
 		
 		completedJobs = {}
-		jobs = os.listdir("%s/Jobs" % self.jobsFolder)
-		os.chdir("%s/Jobs" % self.jobsFolder)
+		jobs = os.listdir("%s/Jobs" % self.mainFolder)
+		os.chdir("%s/Jobs" % self.mainFolder)
 		
 		for job in jobs:
 			if "." not in job:
@@ -170,8 +175,8 @@ class masterRequestHandler():
 				allfiles = os.listdir(".")
 				files = []
 				for f in allfiles:
-					if ".out" in f or ".err" in f:
-						files.append(f)
+					#if ".out" in f or ".err" in f:
+					files.append(f)
 				
 				if len(files) > 0:
 				
@@ -180,7 +185,7 @@ class masterRequestHandler():
 					for f in files:
 						tf.add( f )
 					tf.close()
-					completedJobs[job] = "%s/Jobs/%s/%s" % (self.jobsFolder,job,tarname)
+					completedJobs[job] = "%s/Jobs/%s/%s" % (self.mainFolder,job,tarname)
 				
 				os.chdir("../")
 			
@@ -188,7 +193,7 @@ class masterRequestHandler():
 	
 	def removeCompletedJobs(self):
 		for job in self.completedJobs.keys():
-			jf = os.path.join(self.jobsFolder,"Jobs",job)
+			jf = os.path.join(self.mainFolder,"Jobs",job)
 			for f in os.listdir(jf):
 				os.remove(os.path.join(jf,f))
 			os.rmdirs(jf)
