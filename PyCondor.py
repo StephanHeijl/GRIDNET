@@ -10,8 +10,8 @@ class CondorError(Exception):
 		return repr(self.message)
 		
 class PyCondor():
-	condordir = "/usr/local/bin/"
-	mainFolder = "/home/users/project/Stephan"	
+	condordir = "P:\\Condor\\bin"
+	mainFolder = "M:\\CondorMasterRequestHandler"
 	
 	def __init__(self):
 		if(sys.platform in ["posix","linux2"]):

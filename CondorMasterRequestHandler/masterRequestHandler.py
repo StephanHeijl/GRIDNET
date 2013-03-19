@@ -35,7 +35,7 @@ class Log():
 		logfile.close()
 
 class masterRequestHandler():
-	mainFolder = "/home/users/project/Stephan"
+	mainFolder = "M:\\CondorMasterRequestHandler"
 	submittedJobs = False
 	
 	def __init__(self):
