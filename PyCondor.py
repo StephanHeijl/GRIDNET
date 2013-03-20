@@ -10,7 +10,7 @@ class CondorError(Exception):
 		return repr(self.message)
 		
 class PyCondor():
-	condordir = "P:\\Condor\\bin"
+	condordir = "P:\\Condor\\bin\\"
 	mainFolder = "M:\\CondorMasterRequestHandler"
 	
 	def __init__(self):
@@ -134,6 +134,7 @@ class PyCondor():
 			print "Something went wrong changing directories. "
 		
 		starter = Popen(command,shell=True,stdout=PIPE)
+		starter.wait()
 		submissionDetails = starter.stdout.read().split(self.eol)
 		
 		try:

@@ -104,9 +104,14 @@ class masterRequestHandler():
 					cId = self.PyC.startJob(id)
 				except Exception as ex:
 					print ex
+				
+				try:
+					submittedJobs[id] = int(cId)
+				except:
+					print "Submission went wrong"
+					print cId
+					raise RuntimeError, str(cId) + " -> D:"
 					
-				submittedJobs[id] = int(cId)
-				print cId
 				time.sleep(2)
 			else:
 				print "Something went wrong, the path was not found"
@@ -144,7 +149,11 @@ class masterRequestHandler():
 	
 	def checkCompletedJobs(self):
 		runfn = "%s/Jobs/running.log" % (self.mainFolder)
-		condorids = json.loads(open(runfn, "r").read())
+		try:
+			condorids = json.loads(open(runfn, "r").read())
+		except:
+			condorids = {}
+		
 		running = []
 		queue = self.PyC.getCondorQueue()
 		for jobs in queue.values():
@@ -196,7 +205,7 @@ class masterRequestHandler():
 			jf = os.path.join(self.mainFolder,"Jobs",job)
 			for f in os.listdir(jf):
 				os.remove(os.path.join(jf,f))
-			os.rmdirs(jf)
+			os.rmdir(jf)
 			
 	def uploadCompletedJobs(self):
 		for job,file in self.completedJobs.items():
@@ -227,15 +236,10 @@ if __name__ == "__main__":
 	
 	try:
 		mRH.checkCompletedJobs()
-	except Exception as ex:
-		m = "Something went wrong whilst checking for jobs: " + str(ex)
-		log.write(m)
-		
-	try:
 		mRH.uploadCompletedJobs()
 		mRH.removeCompletedJobs()
 	except Exception as ex:
-		m = "Something went wrong whilst uploading and removing completed jobs: " + str(ex)
+		m = "Something went wrong whilst checking for, uploading and removing completed jobs: " + str(ex)
 		log.write(m)
 	
 	try:
