@@ -9,7 +9,7 @@ class Log():
 
 	def write(self, message):
 		t = time.strftime("%a, %d %b %Y %H:%M:%S")
-		self.messages.append(t, message)
+		self.messages.append((t, message))
 		
 	def clearMessages(self):
 		self.messages = []
@@ -17,7 +17,7 @@ class Log():
 	def save(self):
 		self.logSaveTime = time.strftime("%a, %d %b %Y %H:%M:%S")
 		try:
-			logfile = open(self.logFileName, "w")
+			logfile = open(os.path.join(masterRequestHandler.mainFolder, self.logFileName), "w")
 		except IOError:
 			print "Could not open log file. Outputting all messages to stdout.\n\n"
 			for message in self.messages:
@@ -35,8 +35,9 @@ class Log():
 		logfile.close()
 
 class masterRequestHandler():
-	jobsFolder = "M:\\CondorMasterRequestHandler"
+	mainFolder = "M:\\CondorMasterRequestHandler"
 	submittedJobs = False
+	
 	def __init__(self):
 		print "*"*40
 		print "New job check @ %s" % time.strftime("%a, %d %b %Y %H:%M:%S")
@@ -46,7 +47,7 @@ class masterRequestHandler():
 
 	def parsePaths(self):
 		self.paths = {}
-		pathsfile = open(os.path.join(self.jobsFolder,"PATH.ini"))
+		pathsfile = open(os.path.join(self.mainFolder,"PATH.ini"))
 		for path in pathsfile:
 			p = path.split("=")
 			self.paths[p[0].strip(" ")] = p[1].strip(" ")
@@ -65,18 +66,18 @@ class masterRequestHandler():
 			
 			f = job['Files']
 			try:
-				os.mkdir("%s/Jobs/%s" % (self.jobsFolder, id))
+				os.mkdir("%s/Jobs/%s" % (self.mainFolder, id))
 			except:
 				print "%s already exists" % id
 			print f
 			tar = requests.get(f).content
 			
-			newtarname = "%s/Jobs/%s/job_%s_%s.tar.gz" % (self.jobsFolder,id,id,job['Owner'])
+			newtarname = "%s/Jobs/%s/job_%s_%s.tar.gz" % (self.mainFolder,id,id,job['Owner'])
 			newtar = open( newtarname , "wb")
 			newtar.write(tar)
 			newtar.close()
 			result = tarfile.open(newtarname,"r:gz")
-			result.extractall(path="%s/Jobs/%s/" % (self.jobsFolder,id))
+			result.extractall(path="%s/Jobs/%s/" % (self.mainFolder,id))
 			result.close()
 			os.remove(newtarname)
 			
@@ -85,14 +86,13 @@ class masterRequestHandler():
 		submittedJobs = {}
 		for id in self.jobrequests:
 			print "Starting job %s\n" % id
-			jobdir = "%s/Jobs/%s" % (self.jobsFolder,id)
-			 
+			jobdir = "%s/Jobs/%s" % (self.mainFolder,id)
+			
 			jfr = open(os.path.join(jobdir, "CondorFile.job"), "r")
 			jf = jfr.read()
 			jfr.close()
 			
-			jfw = open(os.path.join(jobdir, "CondorFile.job"),"w")
-			
+			jfw = open(os.path.join(jobdir, "CondorFile.job"),"w")			
 			for path in re.findall("%(\w+)%",jf):
 				jf = jf.replace("%"+path+"%", self.paths[path])
 			
@@ -100,11 +100,25 @@ class masterRequestHandler():
 			jfw.close()
 			
 			if os.path.exists(jobdir):
-				cId = self.PyC.startJob(id)
-				submittedJobs[id] = int(cId)
+				try:
+					cId = self.PyC.startJob(id)
+				except Exception as ex:
+					print ex
+				
+				try:
+					submittedJobs[id] = int(cId)
+				except:
+					print "Submission went wrong"
+					print cId
+					raise RuntimeError, str(cId) + " -> D:"
+					
 				time.sleep(2)
+			else:
+				print "Something went wrong, the path was not found"
+				print jobdir
 		
-		runfn = "%s/Jobs/running.log" % (self.jobsFolder)
+		
+		runfn = "%s/Jobs/running.log" % (self.mainFolder)
 		current = {}
 		if os.path.exists(runfn):
 			running = open(runfn,"r")
@@ -134,8 +148,12 @@ class masterRequestHandler():
 	
 	
 	def checkCompletedJobs(self):
-		runfn = "%s/Jobs/running.log" % (self.jobsFolder)
-		condorids = json.loads(open(runfn, "r").read())
+		runfn = "%s/Jobs/running.log" % (self.mainFolder)
+		try:
+			condorids = json.loads(open(runfn, "r").read())
+		except:
+			condorids = {}
+		
 		running = []
 		queue = self.PyC.getCondorQueue()
 		for jobs in queue.values():
@@ -148,8 +166,8 @@ class masterRequestHandler():
 		print running
 		
 		completedJobs = {}
-		jobs = os.listdir("%s/Jobs" % self.jobsFolder)
-		os.chdir("%s/Jobs" % self.jobsFolder)
+		jobs = os.listdir("%s/Jobs" % self.mainFolder)
+		os.chdir("%s/Jobs" % self.mainFolder)
 		
 		for job in jobs:
 			if "." not in job:
@@ -166,8 +184,8 @@ class masterRequestHandler():
 				allfiles = os.listdir(".")
 				files = []
 				for f in allfiles:
-					if ".out" in f or ".err" in f:
-						files.append(f)
+					#if ".out" in f or ".err" in f:
+					files.append(f)
 				
 				if len(files) > 0:
 				
@@ -176,7 +194,7 @@ class masterRequestHandler():
 					for f in files:
 						tf.add( f )
 					tf.close()
-					completedJobs[job] = "%s/Jobs/%s/%s" % (self.jobsFolder,job,tarname)
+					completedJobs[job] = "%s/Jobs/%s/%s" % (self.mainFolder,job,tarname)
 				
 				os.chdir("../")
 			
@@ -184,10 +202,10 @@ class masterRequestHandler():
 	
 	def removeCompletedJobs(self):
 		for job in self.completedJobs.keys():
-			jf = os.path.join(self.jobsFolder,"Jobs",job)
+			jf = os.path.join(self.mainFolder,"Jobs",job)
 			for f in os.listdir(jf):
 				os.remove(os.path.join(jf,f))
-			os.rmdirs(jf)
+			os.rmdir(jf)
 			
 	def uploadCompletedJobs(self):
 		for job,file in self.completedJobs.items():
@@ -218,28 +236,23 @@ if __name__ == "__main__":
 	
 	try:
 		mRH.checkCompletedJobs()
-	except Exception as ex:
-		m = "Something went wrong whilst checking for jobs: "+ ex
-		log.write(m)
-		
-	try:
 		mRH.uploadCompletedJobs()
 		mRH.removeCompletedJobs()
 	except Exception as ex:
-		m = "Something went wrong whilst uploading and removing completed jobs: "+ ex	
+		m = "Something went wrong whilst checking for, uploading and removing completed jobs: " + str(ex)
 		log.write(m)
 	
 	try:
 		jobLimit = mRH.PyC.getCondorStatus()['Totals']['Unclaimed']+1 # Determine the amount of job spaces available
 		print "Available job spaces: %s" % jobLimit
 	except Exception as ex:
-		m = "Something went wrong whilst determining the job limit: "+ ex
+		m = "Something went wrong whilst determining the job limit: " + str(ex)
 		log.write(m)
 	
 	try:
 		mRH.loadJobRequests(jobLimit)
 	except Exception as ex:
-		m = "Something went wrong whilst loading new job requests: "+ ex
+		m = "Something went wrong whilst loading new job requests: " + str(ex)
 		log.write(m)
 	
 	try:
@@ -250,13 +263,14 @@ if __name__ == "__main__":
 		else:
 			print "No new jobs @ %s" % time.strftime("%a, %d %b %Y %H:%M:%S")
 	except Exception as ex:
-		m = "Something went wrong whilst starting the new jobs: "+ ex
+		m = "Something went wrong whilst starting the new jobs: " + str(ex)
 		log.write(m)
 	
 	try:
 		mRH.reportCurrentState()
 	except Exception as ex:
-		m = "Something went wrong whilst reporting the current state to the server: "+ ex
+		m = "Something went wrong whilst reporting the current state to the server: " + str(ex)
 		log.write(m)
 	
 	log.save()
+	
