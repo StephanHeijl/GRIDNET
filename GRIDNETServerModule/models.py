@@ -61,7 +61,8 @@ GRIDSTATE_CHOICES = (
 	("Online","Online - this grid has recently reported itself."),
 	("Stale","Stale - it has been some time since this grid has reported in."),
 	("Offline","Offline - this grid is disconnected from GRIDNET."),
-	("Gone","This grid doesn't exist anymore.")
+	("Gone","This grid doesn't exist anymore."),
+	("Error","There is something wrong with this grid.")
 )
 
 class Grid(models.Model):
