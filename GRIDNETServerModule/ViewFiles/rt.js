@@ -223,15 +223,12 @@ $(function() {
 			return false;
 		}
 		switchContAttr = $(this).attr("switchCont")
-		
-		errored = undefined;
-		
+
 		$.ajax({
 			url:$(this).attr("ajaxAction"), 
 			type: "POST",
 			data: formData, 
 			success:function(data) {
-						errored = false;
 						response = JSON.parse(data)
 						if(response['Response'] == "OK") {
 							if(switchContAttr && switchContAttr.length != 0) {
@@ -248,20 +245,9 @@ $(function() {
 						return myXhr;
 					},
 			cache: false,
-			error: function(data, err, errThrown) {
-				errored = true;
-				
-			},
 		    contentType: false,
 		    processData: false
-		});
-		
-		setTimeout(function() {
-			if(errored==undefined) { 
-				noty({text:"Submitting this is taking some time. You can do other things on GRIDNET during the submission, as long as you don't refresh the page.", layout:"bottom",type:"information"})
-			}
-		}, 5000);
-		
+		});	
 		return false
 	});
 	$("button#removeBackground").live("click", function() {
@@ -466,8 +452,6 @@ function getCurrentGrids() {
 					
 			if (state == "Stale") {
 				html+= "<tr class='grid grid_"+state+"' tooltip=\"This grid hasn't been updated in some time. It may still be active, but it can currently not be reached.\"><td><img src='files/img/world_grey.png' /></td>"
-			} else if (state == "Error") {
-				html+= "<tr class='grid grid_"+state+"' tooltip=\"Something is wrong with this grid, you cannot access it.\"><td><img src='files/img/stop.png' /></td>"
 			} else {
 				html+= "<tr class='grid grid_"+state+"' tooltip='This grid is online.'><td><img src='files/img/world.png' /></td>"
 			}
