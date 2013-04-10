@@ -24,15 +24,27 @@ class Log():
 				print "Message at %s: %s\n" % (message[0], message[1])
 			return
 		
-		logfile.write("Script started at: %s\n" %self.scriptStartTime)
+		logfile.write("Script started at: %s\n" % self.scriptStartTime)
 		for message in self.messages:
 			logfile.write("Message at %s: %s\n" % (message[0], message[1]))
 		
 		if len(self.messages) == 0:
 			logfile.write("Log saved at %s, no errors encountered.\n" % self.logSaveTime)
 			
-		
 		logfile.close()
+		
+	def backup(self):
+		try:
+			backuplogfile = open(os.path.join(masterRequestHandler.mainFolder, self.logFileName+".backup"), "a")
+		except IOError:
+			print "Could not open backup log file."
+			print "You are pretty much doomed."
+			return
+			
+		backuplogfile.write("\n---\n")
+		for message in self.messages:
+			backuplogfile.write("Message at %s: %s\n" % (message[0], message[1]))
+		
 
 class masterRequestHandler():
 	mainFolder = "/home/users/project/Stephan"
@@ -104,9 +116,14 @@ class masterRequestHandler():
 					cId = self.PyC.startJob(id)
 				except Exception as ex:
 					print ex
+				
+				try:
+					submittedJobs[id] = int(cId)
+				except:
+					print "Submission went wrong"
+					print cId
+					raise RuntimeError, str(cId) + " -> D:"
 					
-				submittedJobs[id] = int(cId)
-				print cId
 				time.sleep(2)
 			else:
 				print "Something went wrong, the path was not found"
@@ -144,7 +161,11 @@ class masterRequestHandler():
 	
 	def checkCompletedJobs(self):
 		runfn = "%s/Jobs/running.log" % (self.mainFolder)
-		condorids = json.loads(open(runfn, "r").read())
+		try:
+			condorids = json.loads(open(runfn, "r").read())
+		except:
+			condorids = {}
+		
 		running = []
 		queue = self.PyC.getCondorQueue()
 		for jobs in queue.values():
@@ -153,8 +174,6 @@ class masterRequestHandler():
 					running.append( int(dict(job)['ID']) )
 				except:
 					pass
-		
-		print running
 		
 		completedJobs = {}
 		jobs = os.listdir("%s/Jobs" % self.mainFolder)
@@ -181,6 +200,10 @@ class masterRequestHandler():
 				if len(files) > 0:
 				
 					tarname = "job_%s_results.tar.gz" % ( job )
+					
+					if os.path.exists(tarname):
+						continue
+					
 					tf = tarfile.open(tarname, "w:gz")
 					for f in files:
 						tf.add( f )
@@ -196,7 +219,7 @@ class masterRequestHandler():
 			jf = os.path.join(self.mainFolder,"Jobs",job)
 			for f in os.listdir(jf):
 				os.remove(os.path.join(jf,f))
-			os.rmdirs(jf)
+			os.rmdir(jf)
 			
 	def uploadCompletedJobs(self):
 		for job,file in self.completedJobs.items():
@@ -220,6 +243,29 @@ class masterRequestHandler():
 		req = requests.post("http://www.cytosine.nl/GRIDNET/reportState", data)
 
 		print req.content
+		
+	def reportLatestMRHLogs(self, *logs):
+		logData = {}
+		for log in logs:
+			logFile = open(log.logFileName, "r")
+			logData[log.logFileName] = logFile.read()
+			logFile.close()
+		
+		jsonLogData = logData
+		req = requests.post("http://www.cytosine.nl/GRIDNET/reportMRHLogs", jsonLogData)
+		if req.status_code > 299:
+			log.write("Couldn't connect to GRIDNET report server.")
+			raise Exception
+		
+		print req.text
+		
+	def distressCall(self, message):
+		req = requests.post("http://www.cytosine.nl/GRIDNET/distress", {"Error": message})
+		if req.status_code > 299:
+			err = "Couldn't connect to GRIDNET server. Distress call failed."
+			log.write(err)
+			print err
+			raise Exception
 			
 if __name__ == "__main__":
 	log = Log("log.txt")
@@ -227,19 +273,14 @@ if __name__ == "__main__":
 	
 	try:
 		mRH.checkCompletedJobs()
-	except Exception as ex:
-		m = "Something went wrong whilst checking for jobs: " + str(ex)
-		log.write(m)
-		
-	try:
 		mRH.uploadCompletedJobs()
 		mRH.removeCompletedJobs()
 	except Exception as ex:
-		m = "Something went wrong whilst uploading and removing completed jobs: " + str(ex)
+		m = "Something went wrong whilst checking for, uploading and removing completed jobs: " + str(ex)
 		log.write(m)
 	
 	try:
-		jobLimit = mRH.PyC.getCondorStatus()['Totals']['Unclaimed']+1 # Determine the amount of job spaces available
+		jobLimit = mRH.PyC.getCondorStatus()['Totals']['Unclaimed'] # Determine the amount of job spaces available
 		print "Available job spaces: %s" % jobLimit
 	except Exception as ex:
 		m = "Something went wrong whilst determining the job limit: " + str(ex)
@@ -267,6 +308,21 @@ if __name__ == "__main__":
 	except Exception as ex:
 		m = "Something went wrong whilst reporting the current state to the server: " + str(ex)
 		log.write(m)
-	
-	log.save()
-	
+		
+	try:
+		log.save()
+	except:
+		try:
+			mRH.distressCall("Logs could not be stored.")
+		except:
+			print "Distress call failed. Logs are being stored sequentially. "
+		log.backup()
+		
+	try:
+		mRH.reportLatestMRHLogs(log)
+	except:
+		try:
+			mRH.distressCall("Logs could not be reported.")
+		except:
+			print "Distress call failed. Logs are being stored sequentially. "			
+		log.backup()
