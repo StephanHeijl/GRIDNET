@@ -190,7 +190,11 @@ class masterRequestHandler():
 				except:
 					pass
 				
-				os.chdir(job)
+				try:
+					os.chdir(job)
+				except OSError:
+					continue
+					
 				allfiles = os.listdir(".")
 				files = []
 				for f in allfiles:
@@ -199,12 +203,16 @@ class masterRequestHandler():
 				
 				if len(files) > 0:
 				
-					tarname = "job_%s_results.tar.gz" % ( job )
-					
+					tarname = "job_%s_results.tar.gz" % ( job )					
 					if os.path.exists(tarname):
 						continue
 					
-					tf = tarfile.open(tarname, "w:gz")
+					try:
+						tf = tarfile.open(tarname, "w:gz")
+						print tarname
+					except:
+						continue
+						
 					for f in files:
 						tf.add( f )
 					tf.close()
@@ -246,6 +254,7 @@ class masterRequestHandler():
 		
 	def reportLatestMRHLogs(self, *logs):
 		logData = {}
+		os.chdir(self.mainFolder)
 		for log in logs:
 			logFile = open(log.logFileName, "r")
 			logData[log.logFileName] = logFile.read()
@@ -276,20 +285,20 @@ if __name__ == "__main__":
 		mRH.uploadCompletedJobs()
 		mRH.removeCompletedJobs()
 	except Exception as ex:
-		m = "Something went wrong whilst checking for, uploading and removing completed jobs: " + str(ex)
+		m = "Something went wrong whilst checking for, uploading and removing completed jobs: " + str(ex) + " on line " + str(sys.exc_info()[2].tb_lineno)
 		log.write(m)
 	
 	try:
 		jobLimit = mRH.PyC.getCondorStatus()['Totals']['Unclaimed'] # Determine the amount of job spaces available
 		print "Available job spaces: %s" % jobLimit
 	except Exception as ex:
-		m = "Something went wrong whilst determining the job limit: " + str(ex)
+		m = "Something went wrong whilst determining the job limit: " + str(ex) + " on line " + str(sys.exc_info()[2].tb_lineno)
 		log.write(m)
 	
 	try:
 		mRH.loadJobRequests(jobLimit)
 	except Exception as ex:
-		m = "Something went wrong whilst loading new job requests: " + str(ex)
+		m = "Something went wrong whilst loading new job requests: " + str(ex) + " on line " + str(sys.exc_info()[2].tb_lineno)
 		log.write(m)
 	
 	try:
@@ -300,13 +309,13 @@ if __name__ == "__main__":
 		else:
 			print "No new jobs @ %s" % time.strftime("%a, %d %b %Y %H:%M:%S")
 	except Exception as ex:
-		m = "Something went wrong whilst starting the new jobs: " + str(ex)
+		m = "Something went wrong whilst starting the new jobs: " + str(ex) + " on line " + str(sys.exc_info()[2].tb_lineno)
 		log.write(m)
 	
 	try:
 		mRH.reportCurrentState()
 	except Exception as ex:
-		m = "Something went wrong whilst reporting the current state to the server: " + str(ex)
+		m = "Something went wrong whilst reporting the current state to the server: " + str(ex) + " on line " + str(sys.exc_info()[2].tb_lineno)
 		log.write(m)
 		
 	try:
@@ -314,6 +323,7 @@ if __name__ == "__main__":
 	except:
 		try:
 			mRH.distressCall("Logs could not be stored.")
+			
 		except:
 			print "Distress call failed. Logs are being stored sequentially. "
 		log.backup()
