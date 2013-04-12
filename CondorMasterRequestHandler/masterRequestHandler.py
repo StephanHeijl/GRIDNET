@@ -175,7 +175,7 @@ class masterRequestHandler():
 				except:
 					pass
 		
-		completedJobs = {}
+		self.completedJobs = {}
 		jobs = os.listdir("%s/Jobs" % self.mainFolder)
 		os.chdir("%s/Jobs" % self.mainFolder)
 		
@@ -201,40 +201,46 @@ class masterRequestHandler():
 					#if ".out" in f or ".err" in f:
 					files.append(f)
 				
-				if len(files) > 0:
-				
-					tarname = "job_%s_results.tar.gz" % ( job )					
-					if os.path.exists(tarname):
-						continue
-					
-					try:
-						tf = tarfile.open(tarname, "w:gz")
-						print tarname
-					except:
+				if len(files) > 0:				
+					tarname = "job_%s_results.tar.gz" % ( job )	
+					print tarname				
+					if tarname in files:
+						print "Tar exists, adding to completed jobs"
+						self.completedJobs[job] = "%s/Jobs/%s/%s" % (self.mainFolder,job,tarname)
 						continue
 						
+					tf = tarfile.open(tarname, "w:gz")
+											
 					for f in files:
 						tf.add( f )
 					tf.close()
-					completedJobs[job] = "%s/Jobs/%s/%s" % (self.mainFolder,job,tarname)
+					self.completedJobs[job] = "%s/Jobs/%s/%s" % (self.mainFolder,job,tarname)
 				
 				os.chdir("../")
 			
-		self.completedJobs = completedJobs
+		print pf(self.completedJobs)
 	
-	def removeCompletedJobs(self):
-		for job in self.completedJobs.keys():
-			jf = os.path.join(self.mainFolder,"Jobs",job)
-			for f in os.listdir(jf):
-				os.remove(os.path.join(jf,f))
-			os.rmdir(jf)
-			
 	def uploadCompletedJobs(self):
 		for job,file in self.completedJobs.items():
 			url = "http://www.cytosine.nl/GRIDNET/results/%s" % job
 			files = {job: (file, open(file, 'rb'))}
 			r = requests.post(url, files=files)
 			print r.content
+	
+	def removeCompletedJobs(self):
+		print "Removing jobs"
+		print pf(self.completedJobs.keys())
+		
+		for job in self.completedJobs.keys():
+			print "\t%s" % job
+			jf = os.path.join(self.mainFolder,"Jobs",job)
+			for f in os.listdir(jf):
+				print "\t\tRemoving %s" % f
+				os.remove(os.path.join(jf,f))
+			print "\tRemoving %s" % jf
+			os.rmdir(jf)
+			
+			
 	
 	def reportCurrentState(self):
 		print "Reporting state to Master Server"
@@ -329,7 +335,7 @@ if __name__ == "__main__":
 		log.backup()
 		
 	try:
-		mRH.reportLatestMRHLogs(log)
+		mRH.reportLatestMRHLogs(log, Log("mRH.log"))
 	except:
 		try:
 			mRH.distressCall("Logs could not be reported.")
