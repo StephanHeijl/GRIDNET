@@ -658,6 +658,7 @@ def results(request,job):
 				return HttpResponse(json.dumps({"Response":"Already completed"}))
 				
 			cjob.status = "Completed"
+			cjop.processes_running = 0
 			cjob.ended_on = datetime.datetime.now()
 			cjob.save()			
 			
