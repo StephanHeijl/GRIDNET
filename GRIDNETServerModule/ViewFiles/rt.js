@@ -48,6 +48,11 @@ $(function() {
 	
 	function switchCont(tile, cont) { // Switches the content panel
 		if (cont) {
+			setTimeout(function() {
+				switchCont(tile,cont);
+				noty({text:"Automatically updated page.", layout:"bottom",type:"information"})
+				}, 1000*60*15); // Automatically update every 15 minutes
+				
 			// Handle optional format arguments
 			args = []
 			for (arg in arguments) {
