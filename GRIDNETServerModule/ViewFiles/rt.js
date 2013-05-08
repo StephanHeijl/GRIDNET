@@ -435,7 +435,7 @@ function getCurrentJobs(all) {
 			}		 
 						 
 			html+=      "<td>"+data[job]['Created_On']+"</td> \n\
-						 <td>"+data[job]['Status']+"</a></td> \n\
+						 <td tooltip='There are still "+data[job]['Processes_Running']+" processes running.'>"+data[job]['Status']+"</a></td> \n\
 						 <td><progress value="+statuses[data[job]['Status']]+" max=100></progress></td> \n\
 						 \
 						 <td><img src='files/img/refresh.png' class='restartJob' tooltip='Restart this job' name='" + id + "'/></td> \n"
