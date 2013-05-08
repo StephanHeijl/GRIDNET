@@ -533,14 +533,36 @@ def currentState(request):
 		
 	if "queue" in request.POST:
 		with open(rel("queue.json"),"w") as queue:
-			queue.write(request.POST['queue'])	
+			queue.write(request.POST['queue'])
+			
+		q = json.loads(request.POST['queue'])
+		for system in q:
+			if system == "@":
+				continue
+			
+			processCounts = {}
+			
+			for job in q[system]:
+				jobId, pId = str(dict(job)['ID']).split(".")
+				
+				if int(jobId) in processCounts:
+					processCounts[int(jobId)] += 1
+				else:
+					processCounts[int(jobId)] = 1
+			
+			for process, count in processCounts.items():
+				j = Job.objects.filter(condor_id=int(process))
+				if len(j) == 0:
+					continue
+				j[0].processes_running = count
+				j[0].save()	
 		
-		reported["Queue"] = True
+		reported["Queue"] = processCounts
 		
 	if "batch" in request.POST:		
 		for k,v in json.loads(request.POST['batch']).items():
 			j = Job.objects.filter(id=k)[0]
-			j.status = "Working"
+			j.status = "Working"			
 			j.condor_id = v
 			j.save()
 		
@@ -750,6 +772,7 @@ def getJobs(request):
 							'Task':job.task.taskname,
 							'Created_On':str(job.created_on),
 							'Status': job.status,
+							'Processes_Running': job.processes_running,
 							'Description': job.description,
 							'Completed_on':str(job.ended_on) if job.ended_on else ""
 						  }
