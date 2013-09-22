@@ -48,6 +48,11 @@ $(function() {
 	
 	function switchCont(tile, cont) { // Switches the content panel
 		if (cont) {
+			setTimeout(function() {
+				switchCont(tile,cont);
+				noty({text:"Automatically updated page.", layout:"bottom",type:"information"})
+				}, 1000*60*15); // Automatically update every 15 minutes
+				
 			// Handle optional format arguments
 			args = []
 			for (arg in arguments) {
@@ -223,12 +228,15 @@ $(function() {
 			return false;
 		}
 		switchContAttr = $(this).attr("switchCont")
-
+		
+		errored = undefined;
+		
 		$.ajax({
 			url:$(this).attr("ajaxAction"), 
 			type: "POST",
 			data: formData, 
 			success:function(data) {
+						errored = false;
 						response = JSON.parse(data)
 						if(response['Response'] == "OK") {
 							if(switchContAttr && switchContAttr.length != 0) {
@@ -245,9 +253,20 @@ $(function() {
 						return myXhr;
 					},
 			cache: false,
+			error: function(data, err, errThrown) {
+				errored = true;
+				
+			},
 		    contentType: false,
 		    processData: false
-		});	
+		});
+		
+		setTimeout(function() {
+			if(errored==undefined) { 
+				noty({text:"Submitting this is taking some time. You can do other things on GRIDNET during the submission, as long as you don't refresh the page.", layout:"bottom",type:"information"})
+			}
+		}, 5000);
+		
 		return false
 	});
 	$("button#removeBackground").live("click", function() {
@@ -421,7 +440,7 @@ function getCurrentJobs(all) {
 			}		 
 						 
 			html+=      "<td>"+data[job]['Created_On']+"</td> \n\
-						 <td>"+data[job]['Status']+"</a></td> \n\
+						 <td tooltip='There are still "+data[job]['Processes_Running']+" processes running.'>"+data[job]['Status']+"</a></td> \n\
 						 <td><progress value="+statuses[data[job]['Status']]+" max=100></progress></td> \n\
 						 \
 						 <td><img src='files/img/refresh.png' class='restartJob' tooltip='Restart this job' name='" + id + "'/></td> \n"
@@ -452,6 +471,8 @@ function getCurrentGrids() {
 					
 			if (state == "Stale") {
 				html+= "<tr class='grid grid_"+state+"' tooltip=\"This grid hasn't been updated in some time. It may still be active, but it can currently not be reached.\"><td><img src='files/img/world_grey.png' /></td>"
+			} else if (state == "Error") {
+				html+= "<tr class='grid grid_"+state+"' tooltip=\"Something is wrong with this grid, you cannot access it.\"><td><img src='files/img/stop.png' /></td>"
 			} else {
 				html+= "<tr class='grid grid_"+state+"' tooltip='This grid is online.'><td><img src='files/img/world.png' /></td>"
 			}

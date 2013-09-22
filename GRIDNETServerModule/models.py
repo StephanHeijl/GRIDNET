@@ -61,7 +61,8 @@ GRIDSTATE_CHOICES = (
 	("Online","Online - this grid has recently reported itself."),
 	("Stale","Stale - it has been some time since this grid has reported in."),
 	("Offline","Offline - this grid is disconnected from GRIDNET."),
-	("Gone","This grid doesn't exist anymore.")
+	("Gone","This grid doesn't exist anymore."),
+	("Error","There is something wrong with this grid.")
 )
 
 class Grid(models.Model):
@@ -110,16 +111,19 @@ class NodeTask(models.Model):
 class Job(models.Model):
 	owner = models.ForeignKey(User, null=True)
 	grid = models.ForeignKey(Grid, null=True)
-	node = models.ForeignKey(Node, null=True)
+	node = models.ForeignKey(Node, null=True, blank=True)
 	condor_id = models.IntegerField(null=True, blank=True)
 	task = models.ForeignKey(Task, null=True)
 	parameters = models.TextField(blank=True)
 	file = models.FileField(upload_to="JobFiles/", null=True, blank=True)
-	status = models.CharField(max_length=20, default='Queued', editable=False)
+	status = models.CharField(max_length=20, default='Queued', editable=True)
 	created_on = models.DateTimeField(auto_now_add=True, blank=True)
 	started_on = models.DateTimeField(editable=False, null=True, blank=True)
 	ended_on = models.DateTimeField(editable=False, null=True, blank=True)
 	eta = models.DateTimeField(editable=False, null=True, blank=True)
+	processes_started = models.IntegerField(null=True, blank=True)
+	processes_running = models.IntegerField(null=False, blank=False, default=1)
+	processes_ended = models.IntegerField(null=True, blank=True)
 	description = models.TextField(blank=True)
 
 	def __unicode__(self):

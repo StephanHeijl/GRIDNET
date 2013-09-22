@@ -14,6 +14,10 @@ import datetime, tarfile, time, base64
 import os, json,re
 def rel(*x):
     return os.path.join(os.path.abspath(os.path.dirname(__file__)),*x)
+	
+# Import smtplib for the actual sending function
+import smtplib
+from email.mime.text import MIMEText
 
 # This handles jobs that are submitted with the wizard on GRIDNET
 def addJobWizardDo(request):
@@ -462,7 +466,8 @@ def saveStatus(ip,status):
 	# Check for the staleness of all the other grids
 	for grid in allOtherGrids:
 		if grid.last_update + datetime.timedelta(minutes=30) < datetime.datetime.now():
-			grid.state = "Offline"	
+			if grid.state not in ["Gone", "Error"]:
+				grid.state = "Offline"	
 		elif grid.last_update + datetime.timedelta(minutes=10) < datetime.datetime.now():
 			grid.state = "Stale"
 		else:
@@ -528,14 +533,36 @@ def currentState(request):
 		
 	if "queue" in request.POST:
 		with open(rel("queue.json"),"w") as queue:
-			queue.write(request.POST['queue'])	
+			queue.write(request.POST['queue'])
+			
+		q = json.loads(request.POST['queue'])
+		for system in q:
+			if system == "@":
+				continue
+			
+			processCounts = {}
+			
+			for job in q[system]:
+				jobId, pId = str(dict(job)['ID']).split(".")
+				
+				if int(jobId) in processCounts:
+					processCounts[int(jobId)] += 1
+				else:
+					processCounts[int(jobId)] = 1
+			
+			for process, count in processCounts.items():
+				j = Job.objects.filter(condor_id=int(process))
+				if len(j) == 0:
+					continue
+				j[0].processes_running = count
+				j[0].save()	
 		
-		reported["Queue"] = True
+		reported["Queue"] = processCounts
 		
 	if "batch" in request.POST:		
 		for k,v in json.loads(request.POST['batch']).items():
 			j = Job.objects.filter(id=k)[0]
-			j.status = "Working"
+			j.status = "Working"			
 			j.condor_id = v
 			j.save()
 		
@@ -547,6 +574,74 @@ def currentState(request):
 	
 	return HttpResponse(json.dumps(reported))
 		
+def distress(request):
+	ip = request.META['REMOTE_ADDR'];
+	gridWithThisIp = Grid.objects.filter(IP=ip)	
+	
+	if len(gridWithThisIp) < 0:
+		return HttpResponse(json.dumps({"Response":"denied"}))
+	else:
+		cgrid = gridWithThisIp[0]
+	
+	if cgrid.state != "Error":
+		cgrid.state = "Error"
+		cgrid.save()
+	else:
+		return HttpResponse(json.dumps({"Response":"denied - known"}))
+	
+	message = request.POST.get("Error", "General error. Please check out the grid logs.")
+	
+	
+	s = smtplib.SMTP('localhost')
+	sendTo = []
+
+	for user in User.objects.all():
+		if user.is_staff:
+			sendTo.append(user.email)
+	
+	msg = "Subject: %s\r\nFrom: %s\r\nTo: %s\r\n\r\n" % (	'Error occured on grid "%s"' % cgrid,
+															"root@cytosine.nl", 
+															', '.join(sendTo))
+															
+	msg += "\r\n" + message
+	
+	allLogs = os.listdir(rel("Logs"))
+	cgridLogs = filter(lambda l: "GRID_"+str(cgrid.id) in l, allLogs)
+	
+	for log in cgridLogs:
+		logfile = open(rel(os.path.join("Logs", log)), "r")
+		msg += "\r\n --- \r\n" + logfile.read()
+		logfile.close()
+	
+	s.sendmail("root@cytosine.nl", sendTo, msg)
+	s.quit()
+	
+	return HttpResponse(json.dumps({"Response":"OK"}))
+	
+def reportMRHLogs(request):
+	ip = request.META['REMOTE_ADDR'];
+	gridWithThisIp = Grid.objects.filter(IP=ip)	
+	
+	if len(gridWithThisIp) < 0:
+		return HttpResponse(json.dumps({"Response":"denied"}))
+	else:
+		cgrid = gridWithThisIp[0]
+		
+	logs = request.POST
+	
+	for logname, log in logs.items():
+		try:
+			lognameSplit = logname.split(".")
+			logFileName  = '.'.join(['.'.join(lognameSplit[:-1]), "GRID_"+str(cgrid.id), lognameSplit[-1]])
+			f = open(rel(os.path.join("Logs", logFileName)), "w")
+			f.write(log)
+			f.close()
+		except Exception as e:
+			return HttpResponse(json.dumps({"Response":"Error: " + str(e) }))
+		
+	return HttpResponse(json.dumps({"Response":"OK", "Logs uploaded":logs.keys(), "Amount of logs": len(logs)}))
+	
+		
 def results(request,job):
 	success = []
 	error = []
@@ -557,15 +652,45 @@ def results(request,job):
 				for chunk in f.chunks():
 				    destination.write(chunk)
 				destination.close()
-			
+				
 			cjob = Job.objects.filter(id=int(job))[0]
+			if cjob.status == "Completed":
+				return HttpResponse(json.dumps({"Response":"Already completed"}))
+				
 			cjob.status = "Completed"
+			cjop.processes_running = 0
 			cjob.ended_on = datetime.datetime.now()
 			cjob.save()			
 			
+			owner = cjob.owner
+			
+			if len(owner.email) > 0:
+				s = smtplib.SMTP('localhost')
+				sendTo = []
+				
+				msg = "Subject: %s\r\nFrom: %s\r\nTo: %s\r\n\r\n" % (	'Your job with id %s was completed!' % cjob.id,
+																		"root@cytosine.nl", 
+																		owner.email)
+																		
+				delta = cjob.ended_on - cjob.started_on
+				
+				days = delta.days
+				hours = int( delta.seconds / 3600 )
+				minutes = ((delta.seconds % 3600) / 60)
+				seconds = delta.seconds % 3600 % 60
+																		
+				msg += "\r\nYour %s job has finished. It was completed on %s. \r\n" % (cjob.task, cjob.ended_on.strftime("%d/%m/%y %H:%M"))
+				msg += "In total it has taken %s days, %s hours, %s minutes and %s seconds" % (days,hours,minutes,seconds)
+				msg += "\r\nPlease visit http://www.cytosine.nl/GRIDNET/ to download the results."
+				msg += "\r\n\r\nThis message was automatically generated. Please do not reply to this email."
+				msg += "\r\nIf you don't want to receive these messages anymore, remove your email adress from your GRIDNET profile."
+				
+				s.sendmail("root@cytosine.nl", owner.email, msg)
+				s.quit()			
+			
 			success.append(job)
 		except Exception as e:
-			error.append((job,str(e)))
+			error.append((job,str(e)))		
 		        
 	return HttpResponse(json.dumps({"success":success,"error":dict(error)}))
 		
@@ -648,6 +773,7 @@ def getJobs(request):
 							'Task':job.task.taskname,
 							'Created_On':str(job.created_on),
 							'Status': job.status,
+							'Processes_Running': job.processes_running,
 							'Description': job.description,
 							'Completed_on':str(job.ended_on) if job.ended_on else ""
 						  }
@@ -655,7 +781,7 @@ def getJobs(request):
 	return HttpResponse( json.dumps(theJobs) )
 
 def getGrids(request):
-	grids = Grid.objects.all().exclude(state="Offline")
+	grids = Grid.objects.all().exclude(state="Offline").exclude(state="Gone")
 	
 	overview = {}
 	for grid in grids:
