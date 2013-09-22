@@ -10,7 +10,8 @@ class CondorError(Exception):
 		return repr(self.message)
 		
 class PyCondor():
-	#condordir = "P:\\Condor\\bin"
+	condordir = "P:\\Condor\\bin\\"
+	mainFolder = "M:\\CondorMasterRequestHandler"
 	
 	def __init__(self):
 		if(sys.platform in ["posix","linux2"]):
@@ -123,14 +124,18 @@ class PyCondor():
 		
 		return '\n'.join(jobFile)
 	
-	def startJob(self,jobid):
-		jobdir = os.path.abspath("%s\\")  % jobid
-		command = "%s\condor_submit CondorFile.job" % self.condordir
-		os.chdir(jobdir)
-		print command
+	def startJob(self,jobid):		
+		jobdir = os.path.abspath("%s/Jobs/%s" % (self.mainFolder, jobid))  
+		
+		command = "%scondor_submit CondorFile.job" % self.condordir
+		try:
+			os.chdir(jobdir)
+		except Exception as ex:
+			print "Something went wrong changing directories. "
+		
 		starter = Popen(command,shell=True,stdout=PIPE)
+		starter.wait()
 		submissionDetails = starter.stdout.read().split(self.eol)
-		print submissionDetails
 		
 		try:
 			return re.search("cluster (\d+)\.",submissionDetails[-2]).group(1)
