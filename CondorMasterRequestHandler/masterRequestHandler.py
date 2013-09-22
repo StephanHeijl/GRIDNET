@@ -175,9 +175,7 @@ class masterRequestHandler():
 				except:
 					pass
 		
-		print running
-		
-		completedJobs = {}
+		self.completedJobs = {}
 		jobs = os.listdir("%s/Jobs" % self.mainFolder)
 		os.chdir("%s/Jobs" % self.mainFolder)
 		
@@ -192,25 +190,35 @@ class masterRequestHandler():
 				except:
 					pass
 				
-				os.chdir(job)
+				try:
+					os.chdir(job)
+				except OSError:
+					continue
+					
 				allfiles = os.listdir(".")
 				files = []
 				for f in allfiles:
 					#if ".out" in f or ".err" in f:
 					files.append(f)
 				
-				if len(files) > 0:
-				
-					tarname = "job_%s_results.tar.gz" % ( job )
+				if len(files) > 0:				
+					tarname = "job_%s_results.tar.gz" % ( job )	
+					print tarname				
+					if tarname in files:
+						print "Tar exists, adding to completed jobs"
+						self.completedJobs[job] = "%s/Jobs/%s/%s" % (self.mainFolder,job,tarname)
+						continue
+						
 					tf = tarfile.open(tarname, "w:gz")
+											
 					for f in files:
 						tf.add( f )
 					tf.close()
-					completedJobs[job] = "%s/Jobs/%s/%s" % (self.mainFolder,job,tarname)
+					self.completedJobs[job] = "%s/Jobs/%s/%s" % (self.mainFolder,job,tarname)
 				
 				os.chdir("../")
 			
-		self.completedJobs = completedJobs
+		print pf(self.completedJobs)
 	
 	def removeCompletedJobs(self):
 		for job in self.completedJobs.keys():
@@ -225,6 +233,21 @@ class masterRequestHandler():
 			files = {job: (file, open(file, 'rb'))}
 			r = requests.post(url, files=files)
 			print r.content
+	
+	def removeCompletedJobs(self):
+		print "Removing jobs"
+		print pf(self.completedJobs.keys())
+		
+		for job in self.completedJobs.keys():
+			print "\t%s" % job
+			jf = os.path.join(self.mainFolder,"Jobs",job)
+			for f in os.listdir(jf):
+				print "\t\tRemoving %s" % f
+				os.remove(os.path.join(jf,f))
+			print "\tRemoving %s" % jf
+			os.rmdir(jf)
+			
+			
 	
 	def reportCurrentState(self):
 		print "Reporting state to Master Server"
@@ -244,6 +267,7 @@ class masterRequestHandler():
 		
 	def reportLatestMRHLogs(self, *logs):
 		logData = {}
+		os.chdir(self.mainFolder)
 		for log in logs:
 			logFile = open(log.logFileName, "r")
 			logData[log.logFileName] = logFile.read()
@@ -274,20 +298,20 @@ if __name__ == "__main__":
 		mRH.uploadCompletedJobs()
 		mRH.removeCompletedJobs()
 	except Exception as ex:
-		m = "Something went wrong whilst checking for, uploading and removing completed jobs: " + str(ex)
+		m = "Something went wrong whilst checking for, uploading and removing completed jobs: " + str(ex) + " on line " + str(sys.exc_info()[2].tb_lineno)
 		log.write(m)
 	
 	try:
 		jobLimit = mRH.PyC.getCondorStatus()['Totals']['Unclaimed'] # Determine the amount of job spaces available
 		print "Available job spaces: %s" % jobLimit
 	except Exception as ex:
-		m = "Something went wrong whilst determining the job limit: " + str(ex)
+		m = "Something went wrong whilst determining the job limit: " + str(ex) + " on line " + str(sys.exc_info()[2].tb_lineno)
 		log.write(m)
 	
 	try:
 		mRH.loadJobRequests(jobLimit)
 	except Exception as ex:
-		m = "Something went wrong whilst loading new job requests: " + str(ex)
+		m = "Something went wrong whilst loading new job requests: " + str(ex) + " on line " + str(sys.exc_info()[2].tb_lineno)
 		log.write(m)
 	
 	try:
@@ -298,13 +322,13 @@ if __name__ == "__main__":
 		else:
 			print "No new jobs @ %s" % time.strftime("%a, %d %b %Y %H:%M:%S")
 	except Exception as ex:
-		m = "Something went wrong whilst starting the new jobs: " + str(ex)
+		m = "Something went wrong whilst starting the new jobs: " + str(ex) + " on line " + str(sys.exc_info()[2].tb_lineno)
 		log.write(m)
 	
 	try:
 		mRH.reportCurrentState()
 	except Exception as ex:
-		m = "Something went wrong whilst reporting the current state to the server: " + str(ex)
+		m = "Something went wrong whilst reporting the current state to the server: " + str(ex) + " on line " + str(sys.exc_info()[2].tb_lineno)
 		log.write(m)
 		
 	try:
@@ -312,12 +336,13 @@ if __name__ == "__main__":
 	except:
 		try:
 			mRH.distressCall("Logs could not be stored.")
+			
 		except:
 			print "Distress call failed. Logs are being stored sequentially. "
 		log.backup()
 		
 	try:
-		mRH.reportLatestMRHLogs(log)
+		mRH.reportLatestMRHLogs(log, Log("mRH.log"))
 	except:
 		try:
 			mRH.distressCall("Logs could not be reported.")
